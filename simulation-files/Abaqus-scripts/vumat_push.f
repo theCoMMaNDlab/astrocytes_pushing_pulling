@@ -105,6 +105,7 @@
       real*8 theta_dot_1, f_2, thetag_t, thetag_tau
       real*8 coordx, coordy, coordz, maj_axis, min_axis
       real*8 zero, one, two, three, half, third, Pi
+      real*8 W_e, Je
 
       ! constants
       parameter(zero=0.d0, one=1.d0, two=2.d0, three=3.d0, 
@@ -197,12 +198,12 @@
             ! initialization (dummy) step: pass zero timestep
             call integ_white(props, nprops, F_tau, -1.0d0, totalTime,
      +                       coordx, coordy, coordz, thetag_t,
-     +                       theta_dot_1, f_2, thetag_tau, sigma_tau)
+     +                       theta_dot_1, f_2, thetag_tau, sigma_tau, W_e, Je)
          else
             ! perform explicit time integration procedure
             call integ_white(props, nprops, F_tau, dt, totalTime,
      +                       coordx, coordy, coordz, thetag_t,
-     +                       theta_dot_1, f_2, thetag_tau, sigma_tau)
+     +                       theta_dot_1, f_2, thetag_tau, sigma_tau, W_e, Je)
          endif
 
 
@@ -277,7 +278,7 @@
      +         (stressOld(km,ndir+3) + stressNew(km,ndir+3))*strainInc(km,ndir+3) )
          end select
            
-         enerInternNew(km) = enerInternOld(km) + stress_power/density(km)
+         enerInternNew(km) = W_e/(density(km)*Je)
          enerInelasNew(km) = enerInelasOld(km)
 
       enddo ! end loop over material points
@@ -317,6 +318,7 @@
       real*8 thetag_t, thetag_tau, sigma_tau(3,3)
       real*8 coordx, coordy, coordz
       real*8 zero, one, two, three, half, third
+      real*8 W_e, Je
 
       ! constants
       parameter(zero=0.d0, one=1.d0, two=2.d0, three=3.d0, 
@@ -390,12 +392,12 @@
             ! initialization (dummy) step: pass zero timestep
             call integ_gray(props, nprops, F_tau, -1.0d0, totalTime,
      +                      coordx, coordy, coordz, thetag_t,
-     +                      thetag_tau, sigma_tau)
+     +                      thetag_tau, sigma_tau, W_e, Je)
          else
             ! perform explicit time integration procedure
             call integ_gray(props, nprops, F_tau, dt, totalTime,
      +                      coordx, coordy, coordz, thetag_t,
-     +                      thetag_tau, sigma_tau)
+     +                      thetag_tau, sigma_tau, W_e, Je)
          endif
          !---------------------------------------------------------------
          
@@ -449,7 +451,8 @@
      +         (stressOld(km,ndir+3) + stressNew(km,ndir+3))*strainInc(km,ndir+3) )
          end select
            
-         enerInternNew(km) = enerInternOld(km) + stress_power/density(km)
+         ! enerInternNew(km) = enerInternOld(km) + stress_power/density(km)
+         enerInternNew(km) = W_e/(density(km)*Je)
          enerInelasNew(km) = enerInelasOld(km)
 
       enddo ! end loop over material points
@@ -459,7 +462,7 @@
 
       subroutine integ_white(props, nprops, F_tau, dtime, totalTime,
      +                       coordx, coordy, coordz, thetag_t,
-     +                       theta_dot_1, f_2, thetag_tau, sigma_tau
+     +                       theta_dot_1, f_2, thetag_tau, sigma_tau, W_e, Je
      +                       )
 
       implicit none
@@ -470,7 +473,7 @@
       real*8 props(nprops), F_tau(3,3), dtime, totalTime
       real*8 coordx, coordy, coordz, thetag_t
       ! arguments passed in to write
-      real*8 theta_dot_1, f_2, thetag_tau, sigma_tau(3,3)
+      real*8 theta_dot_1, f_2, thetag_tau, sigma_tau(3,3), W_e, Je
       ! properties
       real*8 lambda, mu, G_GM, gamma_1, gamma, T_1, T_2
       real*8 maj_axis, min_axis, b_tilde, N_gyri
@@ -478,12 +481,12 @@
       ! local quantities
       real*8 a_tilde, rad, coordiff, r_tilde, psi
       real*8 Fg_tau(3,3), Jg, Fginv(3,3)
-      real*8 Fe_tau(3,3), Je, Be_tau(3,3)
+      real*8 Fe_tau(3,3), Be_tau(3,3), lnJe
       real*8 detF, f_phi, f_H
-      real*8 Iden(3,3), zero, one, two, four, half, third
+      real*8 Iden(3,3), zero, one, two, three, four, half, third
 
       ! constants
-      parameter(zero=0.d0, one=1.d0, two=2.d0, four=4.d0,
+      parameter(zero=0.d0, one=1.d0, two=2.d0, three = 3.d0, four=4.d0,
      +     half=0.5d0, third=1.d0/3.d0)
       call onem(Iden)
 
@@ -530,6 +533,9 @@
          call mdet(Fg_tau, Jg)
          Je = detF/Jg
          sigma_tau = ((lambda*dlog(Je) - mu)*Iden + mu*Be_tau)/Je
+         lnJe = dlog(Je)
+         W_e  = half*mu*(Be_tau(1,1)+Be_tau(2,2)+Be_tau(3,3)-three)
+     +          - mu*lnJe + half*lambda*lnJe*lnJe
          theta_dot_1 = zero
          f_2 = zero
          return
@@ -576,14 +582,16 @@
       Je = detF/Jg
 
       sigma_tau = ((lambda*dlog(Je) - mu)*Iden + mu*Be_tau)/Je
-
+      lnJe = dlog(Je)
+      W_e  = half*mu*(Be_tau(1,1)+Be_tau(2,2)+Be_tau(3,3)-three)
+     +          - mu*lnJe + half*lambda*lnJe*lnJe
       end subroutine integ_white
 
       !****************************************************************
 
       subroutine integ_gray(props, nprops, F_tau, dtime, totalTime,
      +                      coordx, coordy, coordz, thetag_t,
-     +                      thetag_tau, sigma_tau)
+     +                      thetag_tau, sigma_tau,W_e, Je)
 
       implicit none
 
@@ -592,17 +600,17 @@
       real*8 props(nprops), F_tau(3,3), dtime, totalTime
       real*8 coordx, coordy, coordz, thetag_t
       ! arguments passed in to write
-      real*8 thetag_tau, sigma_tau(3,3)
+      real*8 thetag_tau, sigma_tau(3,3), W_e, Je
       ! properties
       real*8 mu, lambda, G_GM, T_1, maj_axis, min_axis
       ! local quantities
       real*8 detF, N_R(3,1), tmp
       real*8 Fg_tau(3,3), Jg, Fginv(3,3)
-      real*8 Fe_tau(3,3), Je, Be_tau(3,3)
-      real*8 Iden(3,3), zero, one, two, half, third
+      real*8 Fe_tau(3,3), Be_tau(3,3), lnJe
+      real*8 Iden(3,3), zero, one, two, three, half, third
 
       ! constants
-      parameter(zero=0.d0, one=1.d0, two=2.d0, half=0.5d0, third=1.d0/3.d0)
+      parameter(zero=0.d0, one=1.d0, two=2.d0, three=3.d0, half=0.5d0, third=1.d0/3.d0)
       call onem(Iden)
 
       ! obtain material properties
@@ -627,6 +635,9 @@
          call mdet(Fg_tau, Jg)
          Je = detF/Jg
          sigma_tau = ((lambda*dlog(Je) - mu)*Iden + mu*Be_tau)/Je
+         lnJe = dlog(Je)
+         W_e  = half*mu*(Be_tau(1,1)+Be_tau(2,2)+Be_tau(3,3)-three)
+     +          - mu*lnJe + half*lambda*lnJe*lnJe
          return
       endif
 !!!!!!!!!!!!!!!!!!!!!!!!!!! dummy step !!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -655,7 +666,9 @@
       Je = detF/Jg
 
       sigma_tau = ((lambda*dlog(Je) - mu)*Iden + mu*Be_tau)/Je
-
+      lnJe = dlog(Je)
+      W_e  = half*mu*(Be_tau(1,1)+Be_tau(2,2)+Be_tau(3,3)-three)
+     +          - mu*lnJe + half*lambda*lnJe*lnJe
       end subroutine integ_gray
 
       !****************************************************************

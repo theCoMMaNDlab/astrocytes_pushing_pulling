@@ -301,11 +301,11 @@ def Create_Boundary_Conditions(ModelName, InstanceName):
 
     region = a.instances['wall-2'].sets['ref']
     mdb.models[ModelName].EncastreBC(name='ref-right', createStepName='growth', region=region, localCsys=None)
-    # region = a.instances['Part-1'].sets['whole-domain']
-    # mdb.models[ModelName].DisplacementBC(name='fix_z', 
-    #     createStepName='Initial', region=region, u1=UNSET, u2=UNSET, u3=SET, 
-    #     ur1=UNSET, ur2=UNSET, ur3=UNSET, amplitude='Amp-1', distributionType=UNIFORM, 
-    #     fieldName='', localCsys=None)
+    region = a.instances['Part-1'].sets['whole-domain']
+    mdb.models[ModelName].DisplacementBC(name='fix_z', 
+        createStepName='Initial', region=region, u1=UNSET, u2=UNSET, u3=SET, 
+        ur1=UNSET, ur2=UNSET, ur3=UNSET, amplitude='Amp-1', distributionType=UNIFORM, 
+        fieldName='', localCsys=None)
     mdb.models[ModelName].boundaryConditions['back'].move('growth',
         'Initial')
     mdb.models[ModelName].boundaryConditions['bottom'].move('growth',
