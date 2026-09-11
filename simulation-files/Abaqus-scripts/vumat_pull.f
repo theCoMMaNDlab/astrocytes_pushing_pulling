@@ -115,7 +115,7 @@
 
 
       ! pour initial coordinates into the global variable matrix 
-      if (totalTime.lt.0.1) then
+      if (totalTime.lt.1e-4) then
          do km=1,nblock
             inicoord(nElement(km),1) = coordMp(km,1)
             inicoord(nElement(km),2) = coordMp(km,2)
@@ -311,7 +311,7 @@
      +     half=0.5d0, third=1.d0/3.d0)
 
       ! pour initial coordinates into the global variable
-      if (totalTime.lt.0.1) then
+      if (totalTime.lt.1e-4) then
          do km=1,nblock
             inicoord(nElement(km),1) = coordMp(km,1)
             inicoord(nElement(km),2) = coordMp(km,2)

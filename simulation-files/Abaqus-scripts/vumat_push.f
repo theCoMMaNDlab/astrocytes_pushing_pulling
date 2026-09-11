@@ -130,7 +130,7 @@
 
 
       ! pour initial coordinates into the global variable matrix 
-      if (totalTime.lt.0.1) then
+      if (totalTime.lt.1e-4) then
          do km=1,nblock
             inicoord(nElement(km),1) = coordMp(km,1)
             inicoord(nElement(km),2) = coordMp(km,2)
@@ -323,7 +323,7 @@
      +     half=0.5d0, third=1.d0/3.d0)
 
       ! pour initial coordinates into the global variable
-      if (totalTime.lt.0.1) then
+      if (totalTime.lt.1e-4) then
          do km=1,nblock
             inicoord(nElement(km),1) = coordMp(km,1)
             inicoord(nElement(km),2) = coordMp(km,2)
@@ -510,7 +510,13 @@
       ! write(6,*) '  maj_axis=',maj_axis,' min_axis=',min_axis,' b_tilde=',b_tilde
       ! write(6,*) '  N_gyri=',N_gyri,' alpha=',alpha,' delta=',delta
       ! flush(6)
-
+      if (totalTime .gt. 0.20d0 .and. totalTime .lt. 0.20002d0) then
+         write(6,*) 'IW nprops =', nprops
+         write(6,*) 'IW props  =', props(1), props(2), props(3),
+     +                             props(10), props(11), props(12),
+     +                             props(13), props(14), props(15)
+         flush(6)
+      endif
       call mdet(F_tau,detF)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!! dummy step !!!!!!!!!!!!!!!!!!!!!!!!!!!!

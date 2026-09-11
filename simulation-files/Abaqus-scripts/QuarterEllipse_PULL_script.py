@@ -401,7 +401,7 @@ def Create_Mesh(ModelName, PartName, InstanceName, Dimensions, Mesh, minsize, ma
         algorithm=ADVANCING_FRONT)
     partInstances =(a.instances[InstanceName], )
     # Define element type & Create mesh
-    elemType1 = mesh.ElemType(elemCode=C3D8R, elemLibrary=EXPLICIT, kinematicSplit=AVERAGE_STRAIN, secondOrderAccuracy=OFF, hourglassControl=ENHANCED, distortionControl=DEFAULT)
+    elemType1 = mesh.ElemType(elemCode=C3D8R, elemLibrary=EXPLICIT, kinematicSplit=AVERAGE_STRAIN, secondOrderAccuracy=OFF, hourglassControl=ENHANCED, distortionControl=ON)
     elemType2 = mesh.ElemType(elemCode=C3D6, elemLibrary=EXPLICIT)
     elemType3 = mesh.ElemType(elemCode=C3D4, elemLibrary=EXPLICIT)
     c = p.cells
@@ -440,8 +440,8 @@ def Create_Job(ModelName, JobName):
         contactPrint=OFF, historyPrint=OFF,
         userSubroutine='vumat_pull.f',
         scratch='', resultsFormat=ODB, parallelizationMethodExplicit=DOMAIN,
-        numDomains=1, activateLoadBalancing=False, numThreadsPerMpiProcess=1,
-        multiprocessingMode=DEFAULT, numCpus=1)
+        numDomains=12, activateLoadBalancing=False, numThreadsPerMpiProcess=1,
+        multiprocessingMode=DEFAULT, numCpus=12)
 
 
     mdb.jobs[JobName].writeInput(consistencyChecking=OFF)
@@ -458,7 +458,7 @@ def Create_Job(ModelName, JobName):
 if __name__ == '__main__':
     gamma_hat_pull_list = [0.05,0.1,0.2,0.3,0.5,1.0,2.0,3.0]
     Mass_Scaling_list = [120,120,120,120,120,120,150,180]
-    Viscous_Pressure_list = [1e-5,1e-5,1e-4,1e-4,1e-4,1e-4,1e-4,1e-4]
+    Viscous_Pressure_list = [1e-4,1e-5,1e-4,1e-4,1e-4,1e-4,1e-4,1e-4]
     Job_Name_list = ['5em2','10em2','20em2','30em2','50em2','1','2','3'] #len(gamma_hat_pull_list)
     for j in range(1):
 
@@ -477,7 +477,7 @@ if __name__ == '__main__':
         # Mesh Parameters
         # ======================================================
         bias = 3                                                        # bias through width of subcortex
-        ecortex = 8                                                     # number of elements in cortex                                                
+        ecortex = 7                                                     # number of elements in cortex                                                
         cortex_size = CT/ecortex # size of element in cortex
         Mesh = [bias,cortex_size]
         # For biased subcortex mesh
